@@ -1,0 +1,50 @@
+{
+    "manifest_version": 3,
+    "name": "Tab Organiser",
+    "version": "1.2",
+    "description": "Advanced tab grouping with auto-group, custom categories, and context menus.",
+    "permissions": [
+        "tabs",
+        "tabGroups",
+        "storage",
+        "contextMenus",
+        "scripting"
+    ],
+    "host_permissions": [
+        "http://*/*",
+        "https://*/*"
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "action": {
+        "default_popup": "popup.html",
+        "default_title": "Tab Organiser"
+    },
+    "commands": {
+        "_execute_action": {
+            "suggested_key": {
+                "default": "Ctrl+Shift+E",
+                "mac": "Command+Shift+E"
+            },
+            "description": "Open Tab Organiser"
+        },
+        "focus-search": {
+            "suggested_key": {
+                "default": "Ctrl+Shift+F",
+                "mac": "Command+Shift+F"
+            },
+            "description": "Open Tab Organiser and focus search"
+        },
+        "group-active-tab": {
+            "suggested_key": {
+                "default": "Ctrl+Shift+Y",
+                "mac": "Command+Shift+Y"
+            },
+            "description": "Group the active tab into its best match"
+        },
+        "ungroup-active-tab": {
+            "description": "Ungroup the active tab"
+        }
+    }
+}

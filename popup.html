@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+    <div id="sync-overlay" class="sync-screen hidden">
+        <div class="sync-content">
+            <h1 class="sync-title">TabOS</h1>
+            <div class="sync-loader"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5A52FF" stroke-width="2" stroke-linecap="round" class="spin"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-9.22l-5.36 5.36" /></svg></div>
+            <p class="sync-status">Organizing workspace...</p>
+        </div>
+    </div>
+
+    <div class="header-area">
+        <div class="search-avatar-row">
+            <div class="search-box">
+                <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="dash-search-input" placeholder="Search across all windows...">
+            </div>
+            <button id="avatar-btn" class="avatar-circle" title="Menu">
+                <img src="https://ui-avatars.com/api/?name=User&background=5A52FF&color=fff&rounded=true&bold=true" alt="Profile">
+            </button>
+        </div>
+    </div>
+
+    <div class="scroll-content">
+        <div id="windows-grid-container"></div>
+        <div class="favorites-section">
+            <div class="fav-title">FAVORITE TABS</div>
+            <div id="favorites-container" class="fav-list"></div>
+        </div>
+    </div>
+
+    <button id="fab-create" class="fab-btn" title="Create Group">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>
+    <script src="dashboard.js"></script>
+</body>
+</html>

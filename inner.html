@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="inner.css">
+</head>
+<body>
+    <div id="sync-overlay" class="sync-screen hidden">
+        <div class="sync-content">
+            <h1 class="sync-title">TabOS</h1>
+            <div class="sync-loader"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5A52FF" stroke-width="2" stroke-linecap="round" class="spin"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-9.22l-5.36 5.36" /></svg></div>
+            <p class="sync-status">Organizing window...</p>
+        </div>
+    </div>
+
+    <!-- Alert Modal -->
+    <div id="alert-modal" class="hidden">
+        <div class="alert-content">
+            <div class="alert-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div>
+            <h3 class="alert-title">Disable Auto Group?</h3>
+            <p class="alert-desc">Turning this off ungroups your tabs in this window. Proceed?</p>
+            <div class="alert-actions">
+                <button id="alert-cancel" class="btn-alert-cancel">Cancel</button>
+                <button id="alert-confirm" class="btn-alert-confirm">Ungroup All</button>
+            </div>
+        </div>
+        <div class="alert-backdrop"></div>
+    </div>
+
+    <div class="header-fixed-area">
+        <div class="search-avatar-row">
+            <button id="back-to-dash" class="back-btn-minimal" title="Back">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            
+            <div class="search-box">
+                <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="search-input" placeholder="Search">
+                <button id="search-clear" class="hidden">✕</button>
+                <button id="sort-btn" class="sort-icon-btn" title="Sort tabs">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="6" x2="16" y2="6"></line><line x1="4" y1="12" x2="12" y2="12"></line><line x1="4" y1="18" x2="8" y2="18"></line></svg>
+                </button>
+            </div>
+
+            <button id="avatar-btn" class="avatar-circle small-avatar" title="Menu"><img src="https://ui-avatars.com/api/?name=User&background=5A52FF&color=fff&rounded=true&bold=true" alt="Profile"></button>
+        </div>
+    </div>
+
+    <div id="groups-container"></div>
+
+    <div id="search-bar" class="hidden bottom-action-bar">
+        <button id="select-all-btn" class="select-all">
+            <span class="tab-checkbox" id="select-all-box"><svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><polyline points="2 7.5 5.5 11 12 3"></polyline></svg></span>
+            <span>All</span>
+        </button>
+        <div class="search-bar-actions">
+            <button id="search-move" class="sb-move" disabled>Move</button>
+            <button id="search-new" class="sb-new" disabled>New</button>
+        </div>
+    </div>
+
+    <div id="modal" class="hidden">
+        <div class="modal-content">
+            <div class="modal-top-bar">
+                <h3 id="modal-title-text">Edit</h3>
+                <button id="modal-close" class="modal-close-btn"><svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="#111827" stroke-width="2" stroke-linecap="round"><path d="M1 1L13 13M1 13L13 1" /></svg></button>
+            </div>
+
+            <div id="modal-input-container" class="full-width-input-container bg-green">
+                <button id="emoji-trigger" class="emoji-trigger-btn" title="Choose Icon">
+                    <svg id="default-smiley-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                    <span id="selected-emoji-display" class="hidden" style="font-size: 16px;"></span>
+                </button>
+                <input type="text" id="modal-name" class="modal-group-input-full" placeholder="Group Name">
+                <button id="modal-delete" class="modal-delete-group" title="Delete Group"><svg width="18" height="18" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><path d="M1.5 3.5H12.5M4.5 3.5V2C4.5 1.17157 5.17157 0.5 6 0.5H8C8.82843 0.5 9.5 1.17157 9.5 2V3.5M5.5 6.5V10.5M8.5 6.5V10.5M2.5 3.5V11.5C2.5 12.6046 3.39543 13.5 4.5 13.5H9.5C10.6046 13.5 11.5 12.6046 11.5 11.5V3.5" /></svg></button>
+            </div>
+
+            <div id="modal-settings-view">
+                <div class="color-picker" id="default-colors-container" style="margin-top: 16px; margin-bottom: 8px;">
+                    <div class="color-dot bg-green selected" data-color="green" style="background-color: #2E7D32;"></div>
+                    <div class="color-dot bg-red" data-color="red" style="background-color: #D32F2F;"></div>
+                    <div class="color-dot bg-blue" data-color="blue" style="background-color: #3B82F6;"></div>
+                    <div class="color-dot bg-yellow" data-color="yellow" style="background-color: #E67C73;"></div>
+                    <div class="color-dot bg-green-alt" data-color="green" style="background-color: #558B2F;"></div>
+                    <div class="color-dot bg-pink" data-color="pink" style="background-color: #C2185B;"></div>
+                    <div class="color-dot bg-cyan" data-color="cyan" style="background-color: #0097A7;"></div>
+                    <div class="color-dot bg-green-light" data-color="green" style="background-color: #4CAF50;"></div>
+                </div>
+
+                <div class="color-picker" id="custom-colors-container" style="min-height: 0px; margin-bottom: 16px;"></div>
+
+                <div class="input-section" style="margin-bottom: 12px;">
+                    <div class="input-label" style="display: flex; justify-content: space-between;">
+                        <span>CUSTOM COLOR</span>
+                        <span id="add-custom-color-btn" style="color: #5A52FF; cursor: pointer; font-weight: 600; font-size: 10px;">+ ADD</span>
+                    </div>
+                    <div class="hex-row">
+                        <select class="hex-dropdown"><option>Hex</option></select>
+                        <div class="hex-input-wrapper"><div id="hex-preview" class="hex-preview"></div><input type="text" id="modal-custom-color" class="hex-input-noborder" placeholder="4F46E5" maxlength="7"></div>
+                        <input type="text" class="hex-percent" value="100%" readonly>
+                    </div>
+                    <div id="color-helper-text" class="helper-text hidden"></div>
+                </div>
+
+                <div class="input-section">
+                    <div class="input-label">KEYS</div>
+                    <div class="keys-input-wrapper">
+                        <input type="text" id="modal-keywords" class="keys-input" placeholder="github.com">
+                        <span class="keys-optional">OPTIONAL</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="emoji-picker-view" class="hidden">
+                <div class="emoji-section-title">SMILEYS AND EMOTIONS</div>
+                <div class="emoji-grid" id="emoji-grid-container"></div>
+            </div>
+        </div>
+        <button id="modal-save" class="btn-save-wide">Update</button>
+        <div id="modal-backdrop-close"></div>
+    </div>
+    <script src="inner.js"></script>
+</body>
+</html>
