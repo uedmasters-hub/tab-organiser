@@ -1,3 +1,4 @@
+/* Replace the header section of your inner.css with this */
 html, body {
     width: 320px; height: 520px; margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -6,41 +7,129 @@ html, body {
 }
 .hidden { display: none !important; }
 
-/* Slick Header Area */
-.header-fixed-area { 
-    padding: 16px 20px 12px 20px; border-bottom: 1px solid #F3F4F6; 
-    flex-shrink: 0; background: white; z-index: 50; 
-    width: 100%; box-sizing: border-box; /* Fixes Overflow */
+/* EXACT 44px Slick Header Area */
+.header-fixed-area {
+    padding: 12px 20px 8px 14px;
+    border-bottom: 1px solid #F3F4F6;
+    flex-shrink: 0;
+    background: white;
+    z-index: 50;
+    width: 100%;
+    box-sizing: border-box;
+    transition: padding 0.2s;
 }
-.search-avatar-row { display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box;}
 
-.back-btn-minimal { background: none; border: none; padding: 0; margin-left: -4px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #9CA3AF; transition: transform 0.15s, color 0.15s; flex-shrink: 0;}
+.search-avatar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
+    height: 36px;
+}
+
+.back-btn-minimal { 
+    background: none; border: none; padding: 4px; 
+    cursor: pointer; display: flex; align-items: center; justify-content: center; 
+    color: #9CA3AF; transition: transform 0.15s, color 0.15s; flex-shrink: 0;
+}
 .back-btn-minimal:hover { color: #111827; transform: translateX(-2px); }
 
-/* Elastic Search Box */
-.search-box { flex: 1; display: flex; align-items: center; gap: 8px; border: 1px solid #EEF0F3; border-radius: 999px; padding: 10px 14px; background: #fff; min-width: 0; box-sizing: border-box;}
-.search-box:focus-within { border-color: #5A52FF; }
-#search-input { flex: 1; border: none; outline: none; font-size: 14px; background: transparent; color: #111827; min-width: 0;}
-.search-icon { color: #6B7280; flex-shrink: 0; }
-#search-clear { background: none; border: none; cursor: pointer; color: #9CA3AF; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0;}
+/* Unified Pill Container */
+.search-box {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1.5px solid #E5E7EB;
+    border-radius: 999px;
+    padding: 4px 4px 4px 8px;
+    background: #fff;
+    min-width: 0;
+    box-sizing: border-box;
+    height: 100%;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.search-box:focus-within { 
+    border-color: #5A52FF; 
+    box-shadow: 0 4px 12px rgba(90,82,255,0.08);
+}
 
-.sort-icon-btn { background: none; border: none; padding: 0; cursor: pointer; color: #6B7280; display: flex; align-items: center; justify-content: center; transition: color 0.15s; flex-shrink: 0; }
+#search-input { 
+    flex: 1; border: none; outline: none; font-size: 15px; 
+    background: transparent; color: #111827; min-width: 0;
+}
+#search-input::placeholder { color: #9CA3AF; }
+.search-icon { color: #6B7280; flex-shrink: 0; }
+
+#search-clear { 
+    background: none; border: none; cursor: pointer; color: #9CA3AF; 
+    padding: 0 4px; display: flex; align-items: center; justify-content: center; 
+    flex-shrink: 0; font-size: 16px;
+}
+
+/* SMART SHOW/HIDE TRANSITIONS FOR HEADER PILL ELEMENTS */
+.sort-icon-btn {
+    background: none;
+    border: none;
+    /* padding: 4px; */
+    cursor: pointer;
+    color: #6B7280;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+    margin-right: 4px;
+    width: 28px;
+    transform-origin: right center;
+    opacity: 1;
+    overflow: hidden;
+}
 .sort-icon-btn:hover { color: #111827; }
 
-.avatar-circle { width: 34px; height: 34px; border-radius: 50%; border: none; background: none; padding: 0; overflow: hidden; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.08); flex-shrink: 0; }
+.avatar-circle {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: none;
+    padding: 0;
+    overflow: hidden;
+    cursor: pointer;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: right center;
+    opacity: 1;
+}
 .avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
 
-body.search-mode #avatar-btn { display: none !important; }
+/* The smooth fade-out behavior when search activates */
+body.search-mode .avatar-circle,
+body.search-mode .sort-icon-btn {
+    opacity: 0;
+    width: 0;
+    margin: 0;
+    padding: 0;
+    transform: scale(0.6);
+    pointer-events: none;
+    border: none;
+}
+/* Ensure the clear button looks perfectly spaced when others hide */
+body.search-mode #search-clear {
+    margin-right: 8px;
+}
 
+/* --- Keep the rest of your inner.css exactly as it is below this point --- */
 /* Groups Container */
 #groups-container { flex: 1; overflow-y: auto; padding: 16px 20px 80px 20px; }
 
 .group-section { margin-bottom: 24px; }
 .group-section.is-collapsed { margin-bottom: 8px; }
 
-/* Perfected Group Header Alignment */
 .group-header { display: flex; justify-content: flex-start; align-items: center; margin-bottom: 8px; }
-.group-title-pill { display: flex; align-items: center; justify-content: space-between; height: 32px; padding: 0 14px; border-radius: 8px; color: white; font-size: 14px; font-weight: 500; cursor: pointer; flex: 1; box-sizing: border-box; }
+.group-title-pill {display: flex;align-items: center;justify-content: space-between;height: 32px;padding: 0 4px 0 10px;border-radius: 8px;color: white;font-size: 14px;font-weight: 500;cursor: pointer;flex: 1;box-sizing: border-box;}
 .pill-left { display: flex; align-items: center; gap: 6px; }
 
 .group-toggle-btn { background: none; border: none; cursor: pointer; color: inherit; padding: 4px; display: flex; align-items: center; justify-content: center;}
@@ -50,7 +139,6 @@ body.search-mode #avatar-btn { display: none !important; }
 
 .tab-list { min-height: 15px; }
 
-/* LOCKED ROW HEIGHTS TO PREVENT JUMPING */
 .tab-item, .search-tab-item { 
     height: 38px; box-sizing: border-box; 
     background: #F9FAFB; border-radius: 8px; padding: 0 14px; margin-bottom: 8px; 
@@ -63,24 +151,19 @@ body.search-mode #avatar-btn { display: none !important; }
 .tab-item.row-selected, .search-tab-item.row-selected { background: #ECEAFE; }
 .tab-item.is-active, .search-tab-item.is-active { background: #F4F3FF; }
 
-/* Standardized Left Control Area (Drag/Checkbox) */
-
-/* Hide drag handles by default */
-.drag-handle, .group-drag-handle { opacity: 0; transition: opacity 0.2s ease; cursor: grab; display: flex; align-items: center; justify-content: center; width: 24px; /* Maintain width to prevent layout shift on reveal */ }
-
-/* Reveal when parent container is hovered */
-.tab-item:hover .drag-handle, .group-section:hover .group-drag-handle { opacity: 1; }
-
-/* Ensure the left-control container is fixed width to prevent content jumping */
 .left-control { width: 24px; display: flex; justify-content: flex-start; align-items: center; margin-right: 8px; flex-shrink: 0; }
 
-/* Keep group headers clean: handle hidden until section hover */
-.group-header { display: flex; justify-content: flex-start; align-items: center; gap: 0px; /* Handles hidden by default */ margin-bottom: 8px; }
-.group-section:hover .group-drag-handle { opacity: 1; }
+.drag-handle, .group-drag-handle {
+    opacity: 0; transition: opacity 0.2s ease; cursor: grab;
+    display: flex; align-items: center; justify-content: center; width: 24px; flex-shrink: 0;
+    color: #C4C8D0;
+}
+.tab-item:hover .drag-handle, .group-section:hover .group-drag-handle { opacity: 1; }
+.group-drag-handle { margin-right: 8px; }
+.group-drag-handle:hover { color: #6B7280; }
 
 .tab-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #111827; }
 
-/* Standardized Right Action Area */
 .tab-action-area { 
     display: flex; align-items: center; justify-content: flex-end; gap: 4px; 
     height: 100%; min-width: 50px; 
@@ -96,10 +179,8 @@ body.search-mode #avatar-btn { display: none !important; }
 .btn-fav-tab:hover { background: #F3F4F6; color: #F59E0B; }
 .btn-delete-tab:hover { background: #FEF2F2; color: #EF4444; }
 
-/* Always show golden star if favorited */
 .btn-fav-tab.is-fav { display: flex; color: #F59E0B; }
 
-/* HOVER SWAP LOGIC (Age hides, Icons show) */
 .tab-item:hover .tab-age, .search-tab-item:hover .tab-age { display: none; }
 .tab-item:hover .btn-fav-tab, .search-tab-item:hover .btn-fav-tab { display: flex; }
 .tab-item.grouped:hover .btn-delete-tab { display: flex; }
@@ -107,12 +188,11 @@ body.search-mode #avatar-btn { display: none !important; }
 .active-dot { width: 7px; height: 7px; border-radius: 50%; background: #5A52FF; flex-shrink: 0; margin-right: 8px; box-shadow: 0 0 0 3px rgba(90, 82, 255, 0.18); }
 .group-title-pill .active-dot { background: currentColor; box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.28); margin-right: 0; margin-left: 4px; }
 
-.ungrouped-header { display: flex; align-items: center; justify-content: space-between; width: 100%; font-weight: 600; font-size: 14px; margin-bottom: 8px;}
+.ungrouped-header {display: flex;align-items: center;justify-content: space-between;width: 100%;font-weight: 600;font-size: 14px;margin-bottom: 8px;margin: 12px 0 8px;}
 .select-toggle { display: inline-flex; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; font-size: 12px; font-weight: 600; color: #6B7280; padding: 4px 8px; border-radius: 6px;}
 .select-toggle.active { color: #5A52FF; }
 
-/* Checkboxes */
-.tab-checkbox { width: 16px; height: 16px; border-radius: 5px; border: 1.5px solid #D1D5DB; background: #fff; color: #fff; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s, border-color 0.15s; flex-shrink: 0;}
+.tab-checkbox { width: 16px; height: 16px; border-radius: 5px; border: 1.5px solid #D1D5DB; background: #fff; color: #fff; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s, border-color 0.15s; margin-right: 12px; flex-shrink: 0;}
 .tab-checkbox svg { opacity: 0; transition: opacity 0.15s; }
 .tab-checkbox.checked { background: #5A52FF; border-color: #5A52FF; }
 .tab-checkbox.checked svg { opacity: 1; }
@@ -122,7 +202,6 @@ body.search-mode #avatar-btn { display: none !important; }
 .sel-count { font-size: 12px; font-weight: 600; color: #4B5563; }
 .sel-clear { background: none; border: none; cursor: pointer; color: #5A52FF; font-size: 12px; font-weight: 700; }
 
-/* Grid View Cards */
 .tab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .tab-item.card { height: auto; flex-direction: column; align-items: stretch; gap: 8px; padding: 12px; border: 1px solid #EEF0F3; border-radius: 14px; box-shadow: 0 1px 2px rgba(17, 24, 39, 0.04); background: #fff;}
 .tab-item.card:hover { transform: translateY(-1px); border-color: #E5E2FF; }
@@ -134,7 +213,6 @@ body.search-mode #avatar-btn { display: none !important; }
 .card-age { font-size: 11px; color: #9CA3AF; margin-top: auto; }
 .tab-item.card:hover .btn-delete-tab, .tab-item.card:hover .btn-fav-tab { display: flex; }
 
-/* Bottom Action Bar */
 .bottom-action-bar { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #fff; border-top: 1px solid #EEF0F3; box-shadow: 0 -6px 20px rgba(0,0,0,0.06); z-index: 48;}
 .select-all { display: flex; align-items: center; gap: 9px; background: none; border: none; font-size: 15px; font-weight: 600; cursor: pointer;}
 .select-all .tab-checkbox { margin-right: 0; }
@@ -145,10 +223,9 @@ body.search-mode #avatar-btn { display: none !important; }
 .sb-new { background: #5A52FF; color: white; border: 1.5px solid #5A52FF;}
 .sb-move:disabled, .sb-new:disabled { opacity: 0.45; cursor: not-allowed; }
 
-/* Modals */
 #modal { position: absolute; inset: 0; background: rgba(255,255,255,0.8); backdrop-filter: blur(4px); z-index: 100; }
 #modal-backdrop-close { position: absolute; inset: 0; z-index: -1; }
-.modal-content { padding: 20px; display: flex; flex-direction: column; gap: 16px; background: white; height: 100%; box-sizing: border-box; }
+.modal-content {padding: 8px 20px 0 20px;display: flex;flex-direction: column;gap: 16px;background: white;height: 100%;box-sizing: border-box;}
 .modal-top-bar { display: flex; justify-content: space-between; align-items: center; }
 .modal-close-btn { width: 32px; height: 32px; border-radius: 50%; background: white; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
 .full-width-input-container { display: flex; align-items: center; border-radius: 8px; padding: 4px 8px; box-shadow: inset 0 0 0 1px rgba(17, 24, 39, 0.1); }
@@ -181,7 +258,6 @@ body.search-mode #avatar-btn { display: none !important; }
 .emoji-item { font-size: 24px; cursor: pointer; text-align: center; transition: transform 0.1s; user-select: none; }
 .emoji-item:hover { transform: scale(1.2); }
 
-/* Menus */
 .menu-backdrop { position: fixed; inset: 0; z-index: 120; }
 .popup-menu { position: fixed; z-index: 121; min-width: 150px; max-width: 240px; background: #fff; border: 1px solid #EEF0F3; border-radius: 12px; box-shadow: 0 12px 30px rgba(0,0,0,0.16); padding: 6px; animation: riseIn 0.16s ease both; }
 .popup-menu-item { display: flex; width: 100%; text-align: left; background: none; border: none; border-radius: 8px; padding: 9px 10px; font-size: 13px; font-weight: 500; cursor: pointer; color: #111827;}
@@ -189,7 +265,6 @@ body.search-mode #avatar-btn { display: none !important; }
 .popup-menu-item.danger { color: #DC2626; }
 .popup-menu-item.danger:hover { background: #FEF2F2; }
 
-/* Sync Screen / Alerts */
 .sync-screen { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: white; z-index: 200; display: flex; flex-direction: column; justify-content: center; align-items: center; opacity: 1; transition: opacity 0.3s ease; }
 .sync-screen.fade-out { opacity: 0; pointer-events: none; }
 .sync-content { text-align: center; }

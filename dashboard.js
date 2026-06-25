@@ -161,27 +161,30 @@ function setupDashboardEvents() {
         window.location.href = `inner.html?windowId=${currentWin.id}`;
     });
 
-    // FIX 3: Perfectly bound Avatar Click Logic
-    document.getElementById('avatar-btn').addEventListener('click', async (e) => {
+    // FIX: Flawless Avatar menu binding
+    document.getElementById('avatar-btn').addEventListener('click', (e) => {
+        e.preventDefault();
         e.stopPropagation();
-        const data = await chrome.storage.local.get('autoGroup');
-        const isAuto = data.autoGroup || false;
-        
         openMenu(e.currentTarget, [
-            { label: `Auto Group: ${isAuto ? 'On' : 'Off'}`, onClick: async () => {
-                await chrome.storage.local.set({ autoGroup: !isAuto });
-                appState.autoGroup = !isAuto;
-                if(!isAuto) await runSync(false);
+            { label: `Auto Group: ${appState.autoGroup ? 'On' : 'Off'}`, onClick: async () => {
+                appState.autoGroup = !appState.autoGroup;
+                await chrome.storage.local.set({ autoGroup: appState.autoGroup });
+                if(appState.autoGroup) await runSync(false);
             }},
             { label: 'Sync now', onClick: () => runSync(true) },
             { label: 'Settings', onClick: () => alert("Settings coming soon") }
         ]);
     });
 
-    const dashSearch = document.getElementById('dash-search-input');
-    dashSearch.addEventListener('focus', () => window.location.href = `inner.html?windowId=all&focusSearch=true&source=dashboard`);
-    dashSearch.addEventListener('click', () => window.location.href = `inner.html?windowId=all&focusSearch=true&source=dashboard`);
-    dashSearch.addEventListener('keypress', async (e) => {
+    // FIX: Click anywhere in the pill to open global search
+    const dashSearchBox = document.querySelector('.search-box');
+    dashSearchBox.addEventListener('click', (e) => {
+        if (e.target.closest('#avatar-btn')) return; // let avatar handle itself
+        window.location.href = `inner.html?windowId=all&focusSearch=true&source=dashboard`;
+    });
+
+    const dashSearchInput = document.getElementById('dash-search-input');
+    dashSearchInput.addEventListener('keypress', async (e) => {
         if(e.key === 'Enter' && e.target.value.trim() !== '') {
             window.location.href = `inner.html?windowId=all&search=${encodeURIComponent(e.target.value)}&source=dashboard`;
         }

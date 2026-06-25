@@ -46,8 +46,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const paramFocusSearch = urlParams.get('focusSearch');
     appState.searchSource = urlParams.get('source');
 
-    if (paramWinId === 'all') { appState.targetWindowId = 'all'; } 
-    else if (paramWinId) { appState.targetWindowId = parseInt(paramWinId); } 
+    if (paramWinId === 'all') { appState.targetWindowId = 'all'; }
+    else if (paramWinId) { appState.targetWindowId = parseInt(paramWinId); }
     else { const currentWin = await chrome.windows.getCurrent(); appState.targetWindowId = currentWin.id; }
 
     chrome.storage.local.get(['categories', 'autoGroup', 'customColors', 'sortBy', 'viewMode', 'favorites'], async (result) => {
@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         initEmojiPicker();
         setupInnerEvents();
-        
+
         if (paramSearch) {
             document.getElementById('search-input').value = decodeURIComponent(paramSearch);
             currentSearchQuery = decodeURIComponent(paramSearch).toLowerCase();
@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             searchFocused = true;
             setTimeout(() => document.getElementById('search-input').focus(), 150);
         }
-        
+
         await renderInnerUI();
         if (paramAction === 'create') openModal(null);
     });
@@ -111,8 +111,8 @@ async function runSync(showOverlay = false) {
 function exitSearch() {
     clearTimeout(searchDebounce); searchFocused = false; currentSearchQuery = '';
     const input = document.getElementById('search-input'); if (input) { input.value = ''; input.blur(); }
-    document.getElementById('search-clear').classList.add('hidden'); 
-    
+    document.getElementById('search-clear').classList.add('hidden');
+
     if (appState.searchSource === 'dashboard' || appState.targetWindowId === 'all') {
         window.location.href = 'popup.html';
     } else {
@@ -128,15 +128,19 @@ function setupInnerEvents() {
 
     document.getElementById('avatar-btn').addEventListener('click', (e) => {
         openMenu(e.currentTarget, [
-            { label: `View: ${appState.viewMode === 'list' ? 'Grid' : 'List'}`, onClick: () => {
-                appState.viewMode = appState.viewMode === 'list' ? 'cards' : 'list';
-                chrome.storage.local.set({ viewMode: appState.viewMode });
-                renderInnerUI();
-            }},
-            { label: `Auto Group: ${appState.autoGroup ? 'On' : 'Off'}`, onClick: async () => {
-                if(appState.autoGroup) { document.getElementById('alert-modal').classList.remove('hidden'); } 
-                else { appState.autoGroup = true; await chrome.storage.local.set({ autoGroup: true }); await runSync(false); }
-            }},
+            {
+                label: `View: ${appState.viewMode === 'list' ? 'Grid' : 'List'}`, onClick: () => {
+                    appState.viewMode = appState.viewMode === 'list' ? 'cards' : 'list';
+                    chrome.storage.local.set({ viewMode: appState.viewMode });
+                    renderInnerUI();
+                }
+            },
+            {
+                label: `Auto Group: ${appState.autoGroup ? 'On' : 'Off'}`, onClick: async () => {
+                    if (appState.autoGroup) { document.getElementById('alert-modal').classList.remove('hidden'); }
+                    else { appState.autoGroup = true; await chrome.storage.local.set({ autoGroup: true }); await runSync(false); }
+                }
+            },
             { label: 'Sync now', onClick: () => runSync(true) },
             { label: 'Create New Group', onClick: () => openModal(null) }
         ]);
@@ -144,30 +148,30 @@ function setupInnerEvents() {
 
     const searchInput = document.getElementById('search-input'), searchClear = document.getElementById('search-clear');
     searchInput.addEventListener('focus', () => { searchFocused = true; renderInnerUI(); });
-    
+
     searchInput.addEventListener('blur', () => {
         searchFocused = false;
         if (!currentSearchQuery && selectedTabIds.size === 0) {
-            setTimeout(() => { 
+            setTimeout(() => {
                 if (!searchFocused && !currentSearchQuery && selectedTabIds.size === 0) {
                     if (appState.searchSource === 'dashboard' || appState.targetWindowId === 'all') window.location.href = 'popup.html';
-                    else renderInnerUI(); 
+                    else renderInnerUI();
                 }
             }, 120);
         }
     });
-    
+
     searchInput.addEventListener('input', (e) => {
         const raw = e.target.value; searchClear.classList.toggle('hidden', raw.trim().length === 0);
         clearTimeout(searchDebounce); searchDebounce = setTimeout(() => { currentSearchQuery = raw.trim().toLowerCase(); renderInnerUI(); }, 80);
     });
-    
-    searchClear.addEventListener('click', () => { 
-        clearTimeout(searchDebounce); searchInput.value = ''; currentSearchQuery = ''; searchClear.classList.add('hidden'); searchInput.focus(); renderInnerUI(); 
+
+    searchClear.addEventListener('click', () => {
+        clearTimeout(searchDebounce); searchInput.value = ''; currentSearchQuery = ''; searchClear.classList.add('hidden'); searchInput.focus(); renderInnerUI();
     });
 
     document.getElementById('sort-btn').addEventListener('click', (e) => {
-        e.preventDefault(); 
+        e.preventDefault();
         const SORT_LABELS = { recent: 'Recent', oldest: 'Oldest', az: 'Title A–Z', za: 'Title Z–A' };
         openMenu(e.currentTarget, Object.keys(SORT_LABELS).map(key => ({ label: SORT_LABELS[key], active: appState.sortBy === key, onClick: () => { appState.sortBy = key; chrome.storage.local.set({ sortBy: key }); renderInnerUI(); } })));
     });
@@ -200,8 +204,8 @@ function setupInnerEvents() {
 
     document.getElementById('search-move').addEventListener('click', (e) => {
         if (selectedTabIds.size === 0) return;
-        const items = Object.entries(appState.categories).map(([name, data]) => ({ 
-            label: `${data.emoji ? data.emoji + ' ' : ''}${escapeHtml(name)}`, 
+        const items = Object.entries(appState.categories).map(([name, data]) => ({
+            label: `${data.emoji ? data.emoji + ' ' : ''}${escapeHtml(name)}`,
             onClick: async () => {
                 const tabsToMove = [...selectedTabIds];
                 const currentWin = await chrome.windows.getCurrent();
@@ -214,12 +218,14 @@ function setupInnerEvents() {
                     const gId = await chrome.tabs.group({ tabIds: tabsToMove });
                     await chrome.tabGroups.update(gId, { title: expectedTitle, color: data.color });
                 }
-                selectMode = false; selectedTabIds.clear(); if(isSearchExperience()) exitSearch(); else renderInnerUI();
+                selectMode = false; selectedTabIds.clear(); if (isSearchExperience()) exitSearch(); else renderInnerUI();
             }
         }));
-        items.push({ label: 'Ungroup', danger: true, onClick: async () => {
-            await chrome.tabs.ungroup([...selectedTabIds]); selectMode = false; selectedTabIds.clear(); renderInnerUI();
-        }});
+        items.push({
+            label: 'Ungroup', danger: true, onClick: async () => {
+                await chrome.tabs.ungroup([...selectedTabIds]); selectMode = false; selectedTabIds.clear(); renderInnerUI();
+            }
+        });
         openMenu(e.currentTarget, items);
     });
 
@@ -228,11 +234,11 @@ function setupInnerEvents() {
     document.getElementById('alert-cancel').addEventListener('click', () => document.getElementById('alert-modal').classList.add('hidden'));
     document.getElementById('alert-confirm').addEventListener('click', async () => {
         document.getElementById('alert-modal').classList.add('hidden'); appState.autoGroup = false; await chrome.storage.local.set({ autoGroup: false });
-        
+
         const qOpts = appState.targetWindowId === 'all' ? {} : { windowId: appState.targetWindowId };
         const allTabs = await chrome.tabs.query(qOpts);
         const grouped = allTabs.filter(t => t.groupId !== chrome.tabGroups.TAB_GROUP_ID_NONE).map(t => t.id);
-        if(grouped.length > 0) await chrome.tabs.ungroup(grouped);
+        if (grouped.length > 0) await chrome.tabs.ungroup(grouped);
         renderInnerUI();
     });
 
@@ -267,12 +273,12 @@ async function renderInnerUI() {
     try {
         const container = document.getElementById('groups-container');
         const inSearch = isSearchExperience();
-        
+
         document.body.classList.toggle('search-mode', inSearch);
         document.body.classList.toggle('view-cards', appState.viewMode === 'cards');
 
         container.innerHTML = '';
-        
+
         const queryOpts = appState.targetWindowId === 'all' ? {} : { windowId: appState.targetWindowId };
         const allTabs = await chrome.tabs.query(queryOpts);
         const validTabs = allTabs.filter(tab => !tab.url.startsWith('chrome://') && !tab.url.startsWith('chrome-extension://'));
@@ -285,7 +291,7 @@ async function renderInnerUI() {
             matchedTabs = sortTabs(matchedTabs);
             selectableIds = matchedTabs.map(t => t.id);
             const total = matchedTabs.length;
-            
+
             const selCount = selectedTabIds.size;
             const headHTML = `<div class="search-head">${selCount > 0 ? `<span class="sel-count"><strong>${selCount}</strong>/${total} SELECTED</span><button class="sel-clear" onclick="selectedTabIds.clear(); renderInnerUI();">✕ CLEAR</button>` : `<span class="sel-count sel-count-muted">${total} TAB${total !== 1 ? 'S' : ''}</span>`}</div>`;
 
@@ -326,7 +332,7 @@ async function renderInnerUI() {
         if (ungroupedTabs.length > 0) container.innerHTML += createGroupHTML('Untitled', null, sortTabs(ungroupedTabs), true);
 
         if (container.innerHTML === '') container.innerHTML = '<div style="text-align:center; color:#9CA3AF; padding: 40px; font-size:13px;">No tabs found.</div>';
-        
+
         staggerIn([...container.querySelectorAll('.group-section')]);
         attachTabEvents();
         selectableIds = selectMode ? [...container.querySelectorAll('.tab-item.ungrouped')].map(el => parseInt(el.dataset.id)) : [];
@@ -353,7 +359,7 @@ function updateActionBar() {
     const bar = document.getElementById('search-bar');
     const open = selectedTabIds.size > 0;
     bar.classList.toggle('hidden', !open);
-    
+
     const move = document.getElementById('search-move'), neu = document.getElementById('search-new');
     if (move) move.disabled = !open; if (neu) neu.disabled = !open;
 
@@ -372,7 +378,7 @@ function getStarIcon(isFav) {
 function createSearchTabHTML(tab, query) {
     let displayTitle = escapeHtml(tab.title || tab.url);
     if (query) { const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'); displayTitle = displayTitle.replace(regex, '<span class="search-highlight">$1</span>'); }
-    
+
     const isFav = appState.favorites.some(f => f.url === tab.url);
     const favBtn = `<button class="btn-fav-tab ${isFav ? 'is-fav' : ''}" data-url="${escapeHtml(tab.url)}" data-title="${escapeHtml(tab.title)}" data-icon="${escapeHtml(tab.favIconUrl || '')}" title="${isFav ? 'Remove from favorites' : 'Add to favorites'}">${getStarIcon(isFav)}</button>`;
     const leftControl = `<div class="left-control">${checkboxHTML(tab.id)}</div>`;
@@ -384,10 +390,10 @@ function createTabHTML(tab, isUngrouped = false) {
     const groupClass = isUngrouped ? 'ungrouped' : 'grouped';
     const selecting = isUngrouped && selectMode, draggable = selecting ? 'false' : 'true';
     const selectedCls = selecting && selectedTabIds.has(tab.id) ? ' row-selected' : '';
-    
+
     const leftControlContent = selecting ? checkboxHTML(tab.id) : `<span class="drag-handle">${GRIP_SVG}</span>`;
     const leftControl = `<div class="left-control">${leftControlContent}</div>`;
-    
+
     const isFav = appState.favorites.some(f => f.url === tab.url);
     const favBtn = `<button class="btn-fav-tab ${isFav ? 'is-fav' : ''}" data-url="${escapeHtml(tab.url)}" data-title="${escapeHtml(tab.title)}" data-icon="${escapeHtml(tab.favIconUrl || '')}" title="${isFav ? 'Remove from favorites' : 'Add to favorites'}">${getStarIcon(isFav)}</button>`;
 
@@ -397,12 +403,12 @@ function createTabHTML(tab, isUngrouped = false) {
 function createTabCardHTML(tab, isUngrouped = false) {
     const groupClass = isUngrouped ? 'ungrouped' : 'grouped';
     const selecting = isUngrouped && selectMode, draggable = selecting ? 'false' : 'true';
-    
+
     const leftControlContent = selecting ? checkboxHTML(tab.id) : `<span class="drag-handle">${GRIP_SVG}</span>`;
     const leftControl = `<div class="left-control">${leftControlContent}</div>`;
-    
+
     const fav = tab.favIconUrl && /^https?:/.test(tab.favIconUrl) ? `<img class="card-favicon" src="${escapeHtml(tab.favIconUrl)}">` : `<span class="card-favicon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg></span>`;
-    
+
     const isFav = appState.favorites.some(f => f.url === tab.url);
     const favBtn = `<button class="btn-fav-tab ${isFav ? 'is-fav' : ''}" data-url="${escapeHtml(tab.url)}" data-title="${escapeHtml(tab.title)}" data-icon="${escapeHtml(tab.favIconUrl || '')}" title="${isFav ? 'Remove from favorites' : 'Add to favorites'}">${getStarIcon(isFav)}</button>`;
 
@@ -411,14 +417,21 @@ function createTabCardHTML(tab, isUngrouped = false) {
 
 function createGroupHTML(name, color, tabs, isUngrouped = false, groupId = null, isCollapsed = false, hasActiveTab = false) {
     const tabsHTML = tabs.map(tab => appState.viewMode === 'cards' ? createTabCardHTML(tab, isUngrouped) : createTabHTML(tab, isUngrouped)).join('');
-    const groupData = appState.categories[name];
+
+    // SAFEGUARD: Only attempt to access groupData if it's not 'Untitled'
     let customStyles = '', emojiDisplay = '';
-    if (groupData) {
-        if (groupData.customHex) customStyles = `background-color: ${groupData.customHex}; color: ${getContrastYIQ(groupData.customHex)};`;
-        if (groupData.emoji) emojiDisplay = `<span class="pill-emoji">${groupData.emoji}</span>`;
+    if (!isUngrouped && appState.categories[name]) {
+        const groupData = appState.categories[name];
+        if (groupData.customHex) {
+            customStyles = `background-color: ${groupData.customHex}; color: ${getContrastYIQ(groupData.customHex)};`;
+        }
+        if (groupData.emoji) {
+            emojiDisplay = `<span class="pill-emoji">${groupData.emoji}</span>`;
+        }
     }
+
     const reorderHandle = `<span class="group-drag-handle" draggable="true" data-group-name="${escapeHtml(name)}">${GRIP_SVG}</span>`;
-    
+
     let headerHTML = '';
     if (isUngrouped) {
         headerHTML = `<div class="ungrouped-header"><span>${name} (${tabs.length})</span><button class="select-toggle${selectMode ? ' active' : ''}">Select</button></div>`;
@@ -426,33 +439,37 @@ function createGroupHTML(name, color, tabs, isUngrouped = false, groupId = null,
         const activeDot = hasActiveTab ? '<span class="active-dot" title="Current tab is in this group"></span>' : '';
         const chevronDown = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
         const chevronUp = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="18 15 12 9 6 15"></polyline></svg>`;
-        
+
         const statusText = isCollapsed ? 'COLLAPSED' : 'EXPAND';
         const statusIcon = isCollapsed ? chevronDown : chevronUp;
 
-        // FIX: Perfectly align the group header dragging handle
         headerHTML = `
             ${reorderHandle}
-            <div class="group-title-pill full-width bg-${color}" data-name="${name}" style="${customStyles}">
+            <div class="group-title-pill full-width bg-${color || 'grey'}" data-name="${name}" style="${customStyles}">
                 <div class="pill-left">${emojiDisplay} ${name} (${tabs.length}) ${activeDot}</div>
                 <div class="collapsed-meta group-toggle-btn" data-group-id="${groupId}" data-collapsed="${isCollapsed}">
                     ${statusText} ${statusIcon}
                 </div>
             </div>`;
     }
-    
-    return `<div class="group-section ${isCollapsed ? 'is-collapsed' : ''}" data-group-name="${escapeHtml(name)}"><div class="group-header">${headerHTML}</div><div class="tab-list ${appState.viewMode === 'cards' ? 'tab-grid' : ''}" style="${isCollapsed ? 'display: none;' : ''}">${tabs.length===0 ? '<div class="empty-group-helper" style="font-size:12px; color:#9CA3AF; text-align:center; padding:16px; border:1px dashed #E5E7EB; border-radius:8px;">Drag tabs here</div>' : tabsHTML}</div></div>`;
+
+    return `<div class="group-section ${isCollapsed ? 'is-collapsed' : ''}" data-group-name="${escapeHtml(name)}">
+              <div class="group-header">${headerHTML}</div>
+              <div class="tab-list ${appState.viewMode === 'cards' ? 'tab-grid' : ''}" style="${isCollapsed ? 'display: none;' : ''}">
+                ${tabs.length === 0 ? '<div class="empty-group-helper" style="font-size:12px; color:#9CA3AF; text-align:center; padding:16px; border:1px dashed #E5E7EB; border-radius:8px;">Drag tabs here</div>' : tabsHTML}
+              </div>
+            </div>`;
 }
 
 function attachSearchEvents() {
     document.querySelectorAll('.search-tab-item').forEach(item => {
         item.addEventListener('click', async (e) => {
-            if(e.target.closest('.btn-fav-tab')) return;
+            if (e.target.closest('.btn-fav-tab')) return;
 
             const tabId = parseInt(e.currentTarget.dataset.id);
-            if (e.target.closest('.tab-checkbox')) { 
-                if(selectedTabIds.has(tabId)) selectedTabIds.delete(tabId); else selectedTabIds.add(tabId);
-                renderInnerUI(); return; 
+            if (e.target.closest('.tab-checkbox')) {
+                if (selectedTabIds.has(tabId)) selectedTabIds.delete(tabId); else selectedTabIds.add(tabId);
+                renderInnerUI(); return;
             }
             await chrome.tabs.update(tabId, { active: true }); await chrome.windows.update((await chrome.tabs.get(tabId)).windowId, { focused: true });
         });
@@ -467,7 +484,7 @@ function attachFavoriteEvents() {
             const url = btn.dataset.url;
             const title = btn.dataset.title;
             const favIconUrl = btn.dataset.icon;
-            
+
             const idx = appState.favorites.findIndex(f => f.url === url);
             if (idx > -1) {
                 appState.favorites.splice(idx, 1);
@@ -537,7 +554,7 @@ function attachTabEvents() {
                 const placeAfter = section.classList.contains('reorder-after'); section.classList.remove('reorder-before', 'reorder-after');
                 if (!section.classList.contains('is-ungrouped') && targetGroup !== draggedGroupName) {
                     const names = Object.keys(appState.categories), from = names.indexOf(draggedGroupName);
-                    if(from >= 0) {
+                    if (from >= 0) {
                         names.splice(from, 1); let to = names.indexOf(targetGroup); if (to < 0) to = names.length; if (placeAfter) to += 1; names.splice(to, 0, draggedGroupName);
                         const rebuilt = {}; names.forEach(n => rebuilt[n] = appState.categories[n]); appState.categories = rebuilt;
                         await chrome.storage.local.set({ categories: appState.categories });
@@ -558,7 +575,7 @@ function attachTabEvents() {
                     if (existingGroups.length > 0) await chrome.tabs.group({ groupId: existingGroups[0].id, tabIds: [draggedTabId] });
                     else { const gId = await chrome.tabs.group({ tabIds: [draggedTabId] }); await chrome.tabGroups.update(gId, { title: expectedTitle, color: groupData.color }); }
                 } else if (targetGroup === 'Untitled') {
-                    await chrome.tabs.ungroup(draggedTabId); 
+                    await chrome.tabs.ungroup(draggedTabId);
                 }
                 if (currentSearchQuery) { document.getElementById('search-input').value = ''; currentSearchQuery = ''; document.getElementById('search-clear').classList.add('hidden'); }
                 renderInnerUI();
@@ -576,7 +593,7 @@ function attachTabEvents() {
     document.querySelectorAll('.group-title-pill').forEach(pill => {
         pill.addEventListener('click', (e) => { if (e.target.closest('.group-toggle-btn')) return; if (pill.dataset.name) openModal(pill.dataset.name); });
     });
-    
+
     attachFavoriteEvents();
 }
 
@@ -593,7 +610,7 @@ function initEmojiPicker() {
 }
 function updateEmojiUI() {
     const svg = document.getElementById('default-smiley-svg'), span = document.getElementById('selected-emoji-display');
-    if (activeSelectedEmoji) { svg.classList.add('hidden'); span.textContent = activeSelectedEmoji; span.classList.remove('hidden'); } 
+    if (activeSelectedEmoji) { svg.classList.add('hidden'); span.textContent = activeSelectedEmoji; span.classList.remove('hidden'); }
     else { svg.classList.remove('hidden'); span.classList.add('hidden'); }
 }
 function renderCustomColors() {
@@ -667,11 +684,11 @@ async function saveGroup() {
 
     const tabsToGroup = (!editingGroupName && pendingGroupTabIds && pendingGroupTabIds.length) ? [...pendingGroupTabIds] : null;
     if (tabsToGroup) {
-        
+
         await chrome.tabs.move(tabsToGroup, { windowId: currentWin.id, index: -1 });
 
         const existing = await chrome.tabGroups.query({ windowId: currentWin.id, title: newExpectedTitle });
-        if (existing.length > 0) { await chrome.tabs.group({ groupId: existing[0].id, tabIds: tabsToGroup }); await chrome.tabGroups.update(existing[0].id, { color }); } 
+        if (existing.length > 0) { await chrome.tabs.group({ groupId: existing[0].id, tabIds: tabsToGroup }); await chrome.tabGroups.update(existing[0].id, { color }); }
         else { const gId = await chrome.tabs.group({ tabIds: tabsToGroup }); await chrome.tabGroups.update(gId, { title: newExpectedTitle, color }); }
         selectMode = false; selectedTabIds.clear(); searchFocused = false; currentSearchQuery = '';
         const input = document.getElementById('search-input'); if (input) input.value = ''; document.getElementById('search-clear').classList.add('hidden');
