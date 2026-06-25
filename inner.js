@@ -1,4 +1,4 @@
-let appState = { categories: {}, autoGroup: false, customColors: [], sortBy: 'recent', viewMode: 'list', recentSearches: [], targetWindowId: null, searchSource: null };
+let appState = { categories: {}, autoGroup: false, customColors: [], sortBy: 'recent', viewMode: 'list', favorites: [], targetWindowId: null, searchSource: null };
 let editingGroupName = null; let draggedTabId = null; let draggedGroupName = null;
 let activeSelectedHex = null; let activeSelectedEmoji = null;
 let currentSearchQuery = ''; let searchDebounce = null;
@@ -44,24 +44,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     const paramAction = urlParams.get('action');
     const paramSearch = urlParams.get('search');
     const paramFocusSearch = urlParams.get('focusSearch');
-    
     appState.searchSource = urlParams.get('source');
 
-    if (paramWinId === 'all') {
-        appState.targetWindowId = 'all';
-    } else if (paramWinId) {
-        appState.targetWindowId = parseInt(paramWinId);
-    } else { 
-        const currentWin = await chrome.windows.getCurrent(); 
-        appState.targetWindowId = currentWin.id; 
-    }
+    if (paramWinId === 'all') { appState.targetWindowId = 'all'; } 
+    else if (paramWinId) { appState.targetWindowId = parseInt(paramWinId); } 
+    else { const currentWin = await chrome.windows.getCurrent(); appState.targetWindowId = currentWin.id; }
 
-    chrome.storage.local.get(['categories', 'autoGroup', 'customColors', 'sortBy', 'viewMode'], async (result) => {
+    chrome.storage.local.get(['categories', 'autoGroup', 'customColors', 'sortBy', 'viewMode', 'favorites'], async (result) => {
         appState.categories = result.categories || DEFAULT_CATEGORIES;
         appState.autoGroup = result.autoGroup || false;
         appState.customColors = result.customColors || [];
         appState.sortBy = result.sortBy || 'recent';
         appState.viewMode = result.viewMode || 'list';
+        appState.favorites = result.favorites || [];
 
         initEmojiPicker();
         setupInnerEvents();
@@ -317,8 +312,6 @@ async function renderInnerUI() {
             }
             if (groupTabs.length === 0) continue;
             groupTabs.forEach(t => groupedTabsIds.add(t.id));
-            
-            // FIX: Always render groups with the full width design
             container.innerHTML += createGroupHTML(name, data.color, sortTabs(groupTabs), false, groupId, isCollapsed, groupTabs.some(t => t.active));
         }
 
@@ -368,29 +361,54 @@ function updateActionBar() {
     if (box) box.classList.toggle('checked', selectableIds.length > 0 && selectableIds.every(id => selectedTabIds.has(id)));
 }
 
+function getStarIcon(isFav) {
+    if (isFav) {
+        return `<svg width="14" height="14" viewBox="0 0 24 24" fill="#F59E0B" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
+    }
+    return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
+}
+
+// FIX: Standardized HTML construction using `.left-control` wrapper
 function createSearchTabHTML(tab, query) {
     let displayTitle = escapeHtml(tab.title || tab.url);
     if (query) { const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'); displayTitle = displayTitle.replace(regex, '<span class="search-highlight">$1</span>'); }
-    return `<div class="search-tab-item${selectedTabIds.has(tab.id) ? ' row-selected' : ''}${tab.active ? ' is-active' : ''}" data-id="${tab.id}">${checkboxHTML(tab.id)}${tab.active ? '<span class="active-dot"></span>' : ''}<span class="tab-title">${displayTitle}</span><div class="tab-action-area"><span class="tab-age">${getTimeAgo(tab.lastAccessed)}</span></div></div>`;
+    
+    const isFav = appState.favorites.some(f => f.url === tab.url);
+    const favBtn = `<button class="btn-fav-tab ${isFav ? 'is-fav' : ''}" data-url="${escapeHtml(tab.url)}" data-title="${escapeHtml(tab.title)}" data-icon="${escapeHtml(tab.favIconUrl || '')}" title="${isFav ? 'Remove from favorites' : 'Add to favorites'}">${getStarIcon(isFav)}</button>`;
+    const leftControl = `<div class="left-control">${checkboxHTML(tab.id)}</div>`;
+
+    return `<div class="search-tab-item${selectedTabIds.has(tab.id) ? ' row-selected' : ''}${tab.active ? ' is-active' : ''}" data-id="${tab.id}">${leftControl}${tab.active ? '<span class="active-dot"></span>' : ''}<span class="tab-title">${displayTitle}</span><div class="tab-action-area">${favBtn}<span class="tab-age">${getTimeAgo(tab.lastAccessed)}</span></div></div>`;
 }
 
 function createTabHTML(tab, isUngrouped = false) {
     const groupClass = isUngrouped ? 'ungrouped' : 'grouped';
     const selecting = isUngrouped && selectMode, draggable = selecting ? 'false' : 'true';
     const selectedCls = selecting && selectedTabIds.has(tab.id) ? ' row-selected' : '';
-    const leftControl = selecting ? checkboxHTML(tab.id) : `<span class="drag-handle">${GRIP_SVG}</span>`;
-    return `<div class="tab-item ${groupClass}${selectedCls}${tab.active ? ' is-active' : ''}" draggable="${draggable}" data-id="${tab.id}">${leftControl}${tab.active ? '<span class="active-dot"></span>' : ''}<span class="tab-title">${escapeHtml(tab.title || tab.url)}</span><div class="tab-action-area"><span class="tab-age">${getTimeAgo(tab.lastAccessed)}</span>${!isUngrouped ? `<button class="btn-delete-tab" data-id="${tab.id}"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" style="pointer-events:none;"><path d="M1.5 3.5H12.5M4.5 3.5V2C4.5 1.17157 5.17157 0.5 6 0.5H8C8.82843 0.5 9.5 1.17157 9.5 2V3.5M5.5 6.5V10.5M8.5 6.5V10.5M2.5 3.5V11.5C2.5 12.6046 3.39543 13.5 4.5 13.5H9.5C10.6046 13.5 11.5 12.6046 11.5 11.5V3.5"/></svg></button>` : ''}</div></div>`;
+    
+    const leftControlContent = selecting ? checkboxHTML(tab.id) : `<span class="drag-handle">${GRIP_SVG}</span>`;
+    const leftControl = `<div class="left-control">${leftControlContent}</div>`;
+    
+    const isFav = appState.favorites.some(f => f.url === tab.url);
+    const favBtn = `<button class="btn-fav-tab ${isFav ? 'is-fav' : ''}" data-url="${escapeHtml(tab.url)}" data-title="${escapeHtml(tab.title)}" data-icon="${escapeHtml(tab.favIconUrl || '')}" title="${isFav ? 'Remove from favorites' : 'Add to favorites'}">${getStarIcon(isFav)}</button>`;
+
+    return `<div class="tab-item ${groupClass}${selectedCls}${tab.active ? ' is-active' : ''}" draggable="${draggable}" data-id="${tab.id}">${leftControl}${tab.active ? '<span class="active-dot"></span>' : ''}<span class="tab-title">${escapeHtml(tab.title || tab.url)}</span><div class="tab-action-area">${favBtn}<span class="tab-age">${getTimeAgo(tab.lastAccessed)}</span>${!isUngrouped ? `<button class="btn-delete-tab" data-id="${tab.id}"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" style="pointer-events:none;"><path d="M1.5 3.5H12.5M4.5 3.5V2C4.5 1.17157 5.17157 0.5 6 0.5H8C8.82843 0.5 9.5 1.17157 9.5 2V3.5M5.5 6.5V10.5M8.5 6.5V10.5M2.5 3.5V11.5C2.5 12.6046 3.39543 13.5 4.5 13.5H9.5C10.6046 13.5 11.5 12.6046 11.5 11.5V3.5"/></svg></button>` : ''}</div></div>`;
 }
 
 function createTabCardHTML(tab, isUngrouped = false) {
     const groupClass = isUngrouped ? 'ungrouped' : 'grouped';
     const selecting = isUngrouped && selectMode, draggable = selecting ? 'false' : 'true';
-    const leftControl = selecting ? checkboxHTML(tab.id) : `<span class="drag-handle">${GRIP_SVG}</span>`;
+    
+    const leftControlContent = selecting ? checkboxHTML(tab.id) : `<span class="drag-handle">${GRIP_SVG}</span>`;
+    const leftControl = `<div class="left-control">${leftControlContent}</div>`;
+    
     const fav = tab.favIconUrl && /^https?:/.test(tab.favIconUrl) ? `<img class="card-favicon" src="${escapeHtml(tab.favIconUrl)}">` : `<span class="card-favicon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg></span>`;
-    return `<div class="tab-item card ${groupClass}${selecting && selectedTabIds.has(tab.id) ? ' row-selected' : ''}${tab.active ? ' is-active' : ''}" draggable="${draggable}" data-id="${tab.id}"><div class="card-top">${leftControl}${!isUngrouped ? `<button class="btn-delete-tab" data-id="${tab.id}"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" style="pointer-events:none;"><path d="M1.5 3.5H12.5M4.5 3.5V2C4.5 1.17157 5.17157 0.5 6 0.5H8C8.82843 0.5 9.5 1.17157 9.5 2V3.5M5.5 6.5V10.5M8.5 6.5V10.5M2.5 3.5V11.5C2.5 12.6046 3.39543 13.5 4.5 13.5H9.5C10.6046 13.5 11.5 12.6046 11.5 11.5V3.5"/></svg></button>` : ''}</div>${fav}<div class="card-title">${escapeHtml(tab.title || tab.url)}</div><div class="card-age">${getTimeAgo(tab.lastAccessed)}</div></div>`;
+    
+    const isFav = appState.favorites.some(f => f.url === tab.url);
+    const favBtn = `<button class="btn-fav-tab ${isFav ? 'is-fav' : ''}" data-url="${escapeHtml(tab.url)}" data-title="${escapeHtml(tab.title)}" data-icon="${escapeHtml(tab.favIconUrl || '')}" title="${isFav ? 'Remove from favorites' : 'Add to favorites'}">${getStarIcon(isFav)}</button>`;
+
+    return `<div class="tab-item card ${groupClass}${selecting && selectedTabIds.has(tab.id) ? ' row-selected' : ''}${tab.active ? ' is-active' : ''}" draggable="${draggable}" data-id="${tab.id}"><div class="card-top">${leftControl}${favBtn}${!isUngrouped ? `<button class="btn-delete-tab" data-id="${tab.id}"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" style="pointer-events:none;"><path d="M1.5 3.5H12.5M4.5 3.5V2C4.5 1.17157 5.17157 0.5 6 0.5H8C8.82843 0.5 9.5 1.17157 9.5 2V3.5M5.5 6.5V10.5M8.5 6.5V10.5M2.5 3.5V11.5C2.5 12.6046 3.39543 13.5 4.5 13.5H9.5C10.6046 13.5 11.5 12.6046 11.5 11.5V3.5"/></svg></button>` : ''}</div>${fav}<div class="card-title">${escapeHtml(tab.title || tab.url)}</div><div class="card-age">${getTimeAgo(tab.lastAccessed)}</div></div>`;
 }
 
-// FIX 3: HTML string properly formats collapsed vs expanded for BOTH states
 function createGroupHTML(name, color, tabs, isUngrouped = false, groupId = null, isCollapsed = false, hasActiveTab = false) {
     const tabsHTML = tabs.map(tab => appState.viewMode === 'cards' ? createTabCardHTML(tab, isUngrouped) : createTabHTML(tab, isUngrouped)).join('');
     const groupData = appState.categories[name];
@@ -406,17 +424,19 @@ function createGroupHTML(name, color, tabs, isUngrouped = false, groupId = null,
         headerHTML = `<div class="ungrouped-header"><span>${name} (${tabs.length})</span><button class="select-toggle${selectMode ? ' active' : ''}">Select</button></div>`;
     } else if (groupId) {
         const activeDot = hasActiveTab ? '<span class="active-dot" title="Current tab is in this group"></span>' : '';
-        const chevron = isCollapsed 
-            ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>` 
-            : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="18 15 12 9 6 15"></polyline></svg>`;
-        const rightSide = isCollapsed ? `COLLAPSED ${chevron}` : chevron;
+        const chevronDown = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
+        const chevronUp = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="18 15 12 9 6 15"></polyline></svg>`;
+        
+        const statusText = isCollapsed ? 'COLLAPSED' : 'EXPAND';
+        const statusIcon = isCollapsed ? chevronDown : chevronUp;
 
+        // FIX: Perfectly align the group header dragging handle
         headerHTML = `
             ${reorderHandle}
             <div class="group-title-pill full-width bg-${color}" data-name="${name}" style="${customStyles}">
                 <div class="pill-left">${emojiDisplay} ${name} (${tabs.length}) ${activeDot}</div>
                 <div class="collapsed-meta group-toggle-btn" data-group-id="${groupId}" data-collapsed="${isCollapsed}">
-                    ${rightSide}
+                    ${statusText} ${statusIcon}
                 </div>
             </div>`;
     }
@@ -427,12 +447,35 @@ function createGroupHTML(name, color, tabs, isUngrouped = false, groupId = null,
 function attachSearchEvents() {
     document.querySelectorAll('.search-tab-item').forEach(item => {
         item.addEventListener('click', async (e) => {
+            if(e.target.closest('.btn-fav-tab')) return;
+
             const tabId = parseInt(e.currentTarget.dataset.id);
             if (e.target.closest('.tab-checkbox')) { 
                 if(selectedTabIds.has(tabId)) selectedTabIds.delete(tabId); else selectedTabIds.add(tabId);
                 renderInnerUI(); return; 
             }
             await chrome.tabs.update(tabId, { active: true }); await chrome.windows.update((await chrome.tabs.get(tabId)).windowId, { focused: true });
+        });
+    });
+    attachFavoriteEvents();
+}
+
+function attachFavoriteEvents() {
+    document.querySelectorAll('.btn-fav-tab').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const url = btn.dataset.url;
+            const title = btn.dataset.title;
+            const favIconUrl = btn.dataset.icon;
+            
+            const idx = appState.favorites.findIndex(f => f.url === url);
+            if (idx > -1) {
+                appState.favorites.splice(idx, 1);
+            } else {
+                appState.favorites.push({ url, title, favIconUrl, addedAt: Date.now() });
+            }
+            await chrome.storage.local.set({ favorites: appState.favorites });
+            renderInnerUI();
         });
     });
 }
@@ -451,7 +494,7 @@ function attachTabEvents() {
 
     document.querySelectorAll('.tab-item.card').forEach(card => {
         card.addEventListener('click', async (e) => {
-            if (e.target.closest('.tab-checkbox') || e.target.closest('.btn-delete-tab') || e.target.closest('.drag-handle')) return;
+            if (e.target.closest('.tab-checkbox') || e.target.closest('.btn-delete-tab') || e.target.closest('.drag-handle') || e.target.closest('.btn-fav-tab')) return;
             if (selectMode && card.classList.contains('ungrouped')) {
                 const id = parseInt(card.dataset.id); if (selectedTabIds.has(id)) selectedTabIds.delete(id); else selectedTabIds.add(id); renderInnerUI(); return;
             }
@@ -462,7 +505,7 @@ function attachTabEvents() {
     document.querySelectorAll('.tab-item.ungrouped:not(.card)').forEach(item => {
         if (!selectMode) return;
         item.addEventListener('click', (e) => {
-            if (e.target.closest('.btn-delete-tab')) return;
+            if (e.target.closest('.btn-delete-tab') || e.target.closest('.btn-fav-tab')) return;
             const id = parseInt(item.dataset.id); if (selectedTabIds.has(id)) selectedTabIds.delete(id); else selectedTabIds.add(id); renderInnerUI();
         });
     });
@@ -533,6 +576,8 @@ function attachTabEvents() {
     document.querySelectorAll('.group-title-pill').forEach(pill => {
         pill.addEventListener('click', (e) => { if (e.target.closest('.group-toggle-btn')) return; if (pill.dataset.name) openModal(pill.dataset.name); });
     });
+    
+    attachFavoriteEvents();
 }
 
 function initEmojiPicker() {

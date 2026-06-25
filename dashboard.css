@@ -38,13 +38,22 @@ html, body {
 .win-more-count { font-size: 24px; font-weight: 800; }
 .win-more-label { font-size: 13px; font-weight: 500; color: rgba(0,0,0,0.6); }
 
-.fav-title { font-size: 11px; font-weight: 700; color: #9CA3AF; letter-spacing: 0.5px; margin-bottom: 12px; text-transform: uppercase; }
+/* Favorite System Updates */
+.fav-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.fav-title { font-size: 11px; font-weight: 700; color: #9CA3AF; letter-spacing: 0.5px; text-transform: uppercase; margin: 0;}
+.fav-group-btn { background: #F3F4F6; border: none; border-radius: 8px; padding: 6px; color: #4B5563; cursor: pointer; transition: background 0.15s, color 0.15s; display: flex; align-items: center; justify-content: center;}
+.fav-group-btn:hover { background: #E9EAFE; color: #5A52FF; }
+
 .fav-list { display: flex; flex-direction: column; gap: 8px; }
 .fav-item { display: flex; align-items: center; padding: 12px 14px; background: #F9FAFB; border-radius: 12px; cursor: pointer; border: 1px solid #EEF0F3; transition: background 0.2s; }
 .fav-item:hover { background: #F3F4F6; }
-.fav-icon { width: 16px; height: 16px; margin-right: 12px; opacity: 0.5; flex-shrink: 0;}
+.fav-icon-img { width: 16px; height: 16px; margin-right: 12px; flex-shrink: 0; border-radius: 3px; }
+.fav-icon { width: 16px; height: 16px; margin-right: 12px; opacity: 0.5; flex-shrink: 0; }
 .fav-text { font-size: 14px; font-weight: 500; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.fav-time { font-size: 11px; color: #9CA3AF; margin-left: 8px; flex-shrink: 0;}
+
+.fav-remove-btn { background: none; border: none; color: #9CA3AF; cursor: pointer; padding: 4px; opacity: 0; transition: opacity 0.2s, color 0.2s, background 0.2s; border-radius: 6px; display: flex; align-items: center; justify-content: center;}
+.fav-item:hover .fav-remove-btn { opacity: 1; }
+.fav-remove-btn:hover { color: #EF4444; background: #FEF2F2; }
 
 .fab-btn { position: absolute; bottom: 20px; right: 20px; width: 52px; height: 52px; border-radius: 50%; background: #5A52FF; color: white; border: none; cursor: pointer; box-shadow: 0 6px 20px rgba(90, 82, 255, 0.4); display: flex; justify-content: center; align-items: center; transition: transform 0.2s; }
 .fab-btn:hover { transform: scale(1.05); }
@@ -54,7 +63,6 @@ html, body {
 .popup-menu-item:hover { background: #F3F4F6; }
 .popup-menu-item.danger { color: #DC2626; }
 .popup-menu-item.danger:hover { background: #FEF2F2; }
-
 .sync-screen { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: white; z-index: 200; display: flex; flex-direction: column; justify-content: center; align-items: center; opacity: 1; transition: opacity 0.3s ease; }
 .sync-screen.fade-out { opacity: 0; pointer-events: none; }
 .sync-content { text-align: center; }

@@ -1,4 +1,4 @@
-let appState = { categories: {}, autoGroup: false };
+let appState = { categories: {}, autoGroup: false, favorites: [] };
 
 document.addEventListener('DOMContentLoaded', async () => {
     try {
@@ -10,9 +10,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadState() {
     return new Promise((resolve) => {
-        chrome.storage.local.get(['categories', 'autoGroup'], (result) => {
+        chrome.storage.local.get(['categories', 'autoGroup', 'favorites'], (result) => {
             appState.categories = result.categories || {};
             appState.autoGroup = result.autoGroup || false;
+            appState.favorites = result.favorites || [];
             resolve();
         });
     });
@@ -76,19 +77,18 @@ async function renderDashboard() {
     gridHTML += `</div>`;
     container.innerHTML = count > 0 ? gridHTML : '<div style="text-align:center; color:#9CA3AF; font-size:13px; padding:20px;">No open windows.</div>';
 
-    const allTabs = windows.flatMap(w => w.tabs).filter(t => t.url && !t.url.startsWith('chrome'));
-    allTabs.sort((a,b) => (b.lastAccessed||0) - (a.lastAccessed||0));
-    const favTabs = allTabs.slice(0, 5);
-    
-    document.getElementById('favorites-container').innerHTML = favTabs.length > 0 ? favTabs.map((t, idx) => {
-        const delay = idx * 30;
+    const favHTML = appState.favorites.length > 0 ? appState.favorites.map((f, idx) => {
+        const fallbackIcon = `<svg class="fav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
+        const iconHTML = f.favIconUrl ? `<img class="fav-icon-img" src="${escapeHtml(f.favIconUrl)}" onerror="this.style.display='none'">` : fallbackIcon;
         return `
-        <div class="fav-item anim-in" style="animation-delay: ${delay}ms;" data-tabid="${t.id}" data-winid="${t.windowId}">
-            <svg class="fav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect></svg>
-            <div class="fav-text" title="${escapeHtml(t.url)}">${escapeHtml(getDomain(t.url))}</div>
-            <div class="fav-time">${getTimeAgo(t.lastAccessed)}</div>
+        <div class="fav-item anim-in" style="animation-delay: ${idx * 30}ms;" data-url="${escapeHtml(f.url)}">
+            ${iconHTML}
+            <div class="fav-text" title="${escapeHtml(f.title)}">${escapeHtml(getDomain(f.url))}</div>
+            <button class="fav-remove-btn" title="Remove" data-url="${escapeHtml(f.url)}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
         </div>`;
-    }).join('') : '<div style="color:#9CA3AF; font-size:12px;">No recent tabs.</div>';
+    }).join('') : '<div style="color:#9CA3AF; font-size:12px;">No favorites added yet.</div>';
+    
+    document.getElementById('favorites-container').innerHTML = favHTML;
 
     bindGridEvents();
 }
@@ -115,10 +115,27 @@ function bindGridEvents() {
 
     document.querySelectorAll('.fav-item').forEach(item => {
         item.addEventListener('click', async (e) => {
-            const tId = parseInt(e.currentTarget.dataset.tabid);
-            const wId = parseInt(e.currentTarget.dataset.winid);
-            await chrome.tabs.update(tId, {active: true});
-            await chrome.windows.update(wId, {focused: true});
+            if(e.target.closest('.fav-remove-btn')) return;
+            const targetUrl = item.dataset.url;
+            const tabs = await chrome.tabs.query({});
+            const openTab = tabs.find(t => t.url === targetUrl);
+            
+            if (openTab) {
+                await chrome.tabs.update(openTab.id, { active: true });
+                await chrome.windows.update(openTab.windowId, { focused: true });
+            } else {
+                await chrome.tabs.create({ url: targetUrl });
+            }
+        });
+    });
+
+    document.querySelectorAll('.fav-remove-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const url = btn.dataset.url;
+            appState.favorites = appState.favorites.filter(f => f.url !== url);
+            await chrome.storage.local.set({ favorites: appState.favorites });
+            renderDashboard();
         });
     });
 }
@@ -129,7 +146,22 @@ function setupDashboardEvents() {
         window.location.href = `inner.html?windowId=${win.id}&action=create`;
     });
 
-    // FIX 3: Event propagation strict handling
+    document.getElementById('group-favs-btn')?.addEventListener('click', async () => {
+        if (appState.favorites.length === 0) return;
+        const currentWin = await chrome.windows.getCurrent();
+        const tabIds = [];
+        
+        for (const f of appState.favorites) {
+            const tab = await chrome.tabs.create({ url: f.url, windowId: currentWin.id, active: false });
+            tabIds.push(tab.id);
+        }
+        
+        const gId = await chrome.tabs.group({ tabIds, windowId: currentWin.id });
+        await chrome.tabGroups.update(gId, { title: "Favorites", color: "yellow" });
+        window.location.href = `inner.html?windowId=${currentWin.id}`;
+    });
+
+    // FIX 3: Perfectly bound Avatar Click Logic
     document.getElementById('avatar-btn').addEventListener('click', async (e) => {
         e.stopPropagation();
         const data = await chrome.storage.local.get('autoGroup');
